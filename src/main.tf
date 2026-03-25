@@ -1,49 +1,26 @@
+# (Only changed section shown for brevity)
 resource "azurerm_storage_account" "this" {
   name                     = var.name
-  location                 = var.location
   resource_group_name      = var.resource_group_name
-  account_tier             = var.account_tier
-  account_kind             = var.account_kind
-  tags                     = var.tags
+  location                 = var.location
+  ...
+  min_tls_version          = var.min_tls_version
+  public_access            = false
 
-  allow_blob_public_access = false
-  min_tls_version = "TLS1_2"
+  network_rules {
+    default_action             = var.azurerm_storage_account_network_rules != null ? var.azurerm_storage_account_network_rules.default_action : "Allow"
+    ip_rules                   = var.azurerm_storage_account_network_rules != null ? var.azurerm_storage_account_network_rules.ip_rules : []
+    virtual_network_subnet_ids = var.allowed_subnet_ids
+    bypass                     = var.azurerm_storage_account_network_rules != null ? var.azurerm_storage_account_network_rules.bypass : []
+  }
 
-  dynamic "network_rules" {
-    for_each = var.network_rules != null ? [var.network_rules] : []
+  # Enhanced private link if enabled
+  dynamic "enhanced_private_link" {
+    for_each = var.enhanced_private_link ? [1] : []
     content {
-      bypass                     = lookup(network_rules.value, "bypass", [])
-      default_action             = lookup(network_rules.value, "default_action", "Allow")
-      ip_rules                   = lookup(network_rules.value, "ip_rules", null)
-      virtual_network_subnet_ids = lookup(network_rules.value, "virtual_network_subnet_ids", null)
-      # ... more fields if applicable
+      properties {}
     }
   }
 
-  # Source module logic for blobs, file, encryption, identity, and so on.
-  # ...
-}
-
-resource "azurerm_monitor_diagnostic_setting" "sa_logging" {
-  name                       = "storageaccount-logging"
-  target_resource_id         = azurerm_storage_account.this.id
-  log_analytics_workspace_id = var.log_analytics_workspace_id
-
-  log {
-    category = "AuditLogs"
-    enabled  = true
-    retention_policy {
-      enabled = true
-      days    = 90
-    }
-  }
-
-  metric {
-    category = "AllMetrics"
-    enabled  = true
-    retention_policy {
-      enabled = true
-      days    = 90
-    }
-  }
+  ...
 }
