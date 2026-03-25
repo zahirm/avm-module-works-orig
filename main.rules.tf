@@ -1,36 +1,27 @@
 resource "azurerm_network_security_rule" "this" {
-  for_each = var.security_rules
+  for_each = { for idx, rule in var.security_rules : idx => rule }
 
-  access                                     = each.value.access
-  direction                                  = each.value.direction
-  name                                       = each.value.name
-  network_security_group_name                = azurerm_network_security_group.this.name
-  priority                                   = each.value.priority
-  protocol                                   = each.value.protocol
-  resource_group_name                        = azurerm_network_security_group.this.resource_group_name
-  description                                = each.value.description
-  destination_address_prefix                 = each.value.destination_address_prefix
-  destination_address_prefixes               = each.value.destination_address_prefixes
-  destination_application_security_group_ids = each.value.destination_application_security_group_ids
-  destination_port_range                     = each.value.destination_port_range
-  destination_port_ranges                    = each.value.destination_port_ranges
-  source_address_prefix                      = each.value.source_address_prefix
-  source_address_prefixes                    = each.value.source_address_prefixes
-  source_application_security_group_ids      = each.value.source_application_security_group_ids
-  source_port_range                          = each.value.source_port_range
-  source_port_ranges                         = each.value.source_port_ranges
+  network_security_group_name = local.resource_name
+  resource_group_name         = var.resource_group_name
 
-  dynamic "timeouts" {
-    for_each = each.value.timeouts == null ? [] : [each.value.timeouts]
+  name                       = each.value.name
+  description                = try(each.value.description, null)
+  protocol                   = try(each.value.protocol, "*")
+  source_port_range          = try(each.value.source_port_range, null)
+  destination_port_range     = try(each.value.destination_port_range, null)
+  source_port_ranges         = try(each.value.source_port_ranges, null)
+  destination_port_ranges    = try(each.value.destination_port_ranges, null)
+  source_address_prefix      = try(each.value.source_address_prefix, null)
+  destination_address_prefix = try(each.value.destination_address_prefix, null)
+  source_address_prefixes    = try(each.value.source_address_prefixes, null)
+  destination_address_prefixes = try(each.value.destination_address_prefixes, null)
+  access                     = try(each.value.access, "Allow")
+  priority                   = try(each.value.priority, 100)
+  direction                  = try(each.value.direction, "Inbound")
+  source_application_security_group_ids = try(each.value.source_application_security_group_ids, null)
+  destination_application_security_group_ids = try(each.value.destination_application_security_group_ids, null)
 
-    content {
-      create = timeouts.value.create
-      delete = timeouts.value.delete
-      read   = timeouts.value.read
-      update = timeouts.value.update
-    }
-  }
-
-  # Do not remove this `depends_on` block. It is required to ensure the NSG is created before the rule.
-  depends_on = [azurerm_network_security_group.this]
+  depends_on = [
+    azurerm_network_security_group.this
+  ]
 }
