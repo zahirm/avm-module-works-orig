@@ -1,57 +1,37 @@
-data "modtm_module_source" "telemetry" {
-  count = var.enable_telemetry ? 1 : 0
-  module_path = path.module
-}
+resource "azurerm_monitor_diagnostic_setting" "this" {
+  for_each = var.diagnostic_settings
 
-resource "random_uuid" "telemetry" {
-  count = var.enable_telemetry ? 1 : 0
-}
+  name               = coalesce(each.value.name, "${local.resource_name}-diagsetting-${each.key}")
+  target_resource_id = azurerm_network_security_group.this.id
 
-resource "modtm_telemetry" "telemetry" {
-  count = var.enable_telemetry ? 1 : 0
-  tags = merge({
-    subscription_id = one(data.azapi_client_config.telemetry).subscription_id
-    tenant_id       = one(data.azapi_client_config.telemetry).tenant_id
-    module_source   = one(data.modtm_module_source.telemetry).module_source
-    module_version  = one(data.modtm_module_source.telemetry).module_version
-    random_id       = one(random_uuid.telemetry).result
-  }, { location = local.main_location })
-}
+  log_analytics_destination_type = each.value.log_analytics_destination_type
+  log_analytics_workspaces       = each.value.workspace_resource_id != null ? [each.value.workspace_resource_id] : []
+  storage_account_id            = each.value.storage_account_resource_id
+  event_hub_authorization_rule_id = each.value.event_hub_authorization_rule_resource_id
+  event_hub_name                = each.value.event_hub_name
+  marketplace_partner_id        = each.value.marketplace_partner_resource_id
 
-locals {
-  fork_avm = !anytrue([for r in local.valid_module_source_regex : can(regex(r, one(data.modtm_module_source.telemetry).module_source))])
-}
+  dynamic "log" {
+    for_each = length(each.value.log_categories) > 0 ? each.value.log_categories : []
+    content {
+      category = log.value
+      enabled  = true
+      retention_policy {
+        enabled = false
+        days    = 0
+      }
+    }
+  }
 
-locals {
-  valid_module_source_regex = [
-    "registry.terraform.io/[A|a]zure/.+",
-    "registry.opentofu.io/[A|a]zure/.+",
-    "git::https://github\\.com/[A|a]zure/.+",
-    "git::ssh:://git@github\\.com/[A|a]zure/.+",
-  ]
-}
-
-locals {
-  avm_azapi_headers = !var.enable_telemetry ? {} : (local.fork_avm ? {
-    fork_avm  = "true"
-    random_id = one(random_uuid.telemetry).result
-    } : {
-    avm                = "true"
-    random_id          = one(random_uuid.telemetry).result
-    avm_module_source  = one(data.modtm_module_source.telemetry).module_source
-    avm_module_version = one(data.modtm_module_source.telemetry).module_version
-  })
-}
-
-locals {
-  # tflint-ignore: terraform_unused_declarations
-  avm_azapi_header = join(" ", [for k, v in local.avm_azapi_headers : "${k}=${v}"])
-}
-
-data "azapi_client_config" "telemetry" {
-  count = var.enable_telemetry ? 1 : 0
-}
-
-locals {
-  main_location = var.location
+  dynamic "metric" {
+    for_each = length(each.value.metric_categories) > 0 ? each.value.metric_categories : []
+    content {
+      category = metric.value
+      enabled  = true
+      retention_policy {
+        enabled = false
+        days    = 0
+      }
+    }
+  }
 }
