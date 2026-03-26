@@ -1,0 +1,6 @@
+name: azure-storage-account
+version: 1.0.0
+avm_version: 1.1
+summary: 'Azure Storage Account module with advanced networking and security.'
+description: 'Creates an Azure Storage Account with configurable network rules, TLS, and enhanced private link.'
+... # (rest aligned with source .metadata)
