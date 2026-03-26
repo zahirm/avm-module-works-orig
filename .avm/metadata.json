@@ -1,0 +1,8 @@
+{
+  "name": "terraform-azurerm-avm-res-storage-storageaccount",
+  "version": "1.0.0",
+  "description": "Azure Storage Account module with advanced configuration for containers, network rules, identity, and tagging.",
+  "repository": "https://github.com/Azure/terraform-azurerm-avm-res-storage-storageaccount.git",
+  "avm_type": "module",
+  "avm_schema_version": "1.0"
+}
