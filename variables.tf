@@ -1,88 +1,122 @@
 variable "name" {
-  description = "The name of the storage account."
   type        = string
-  validation {
-    condition     = length(var.name) >= 3 && length(var.name) <= 24
-    error_message = "Storage account name must be between 3 and 24 characters."
-  }
+  description = "Name of the Storage Account."
 }
 
 variable "resource_group_name" {
-  description = "Resource group name."
   type        = string
+  description = "Resource group name."
 }
 
 variable "location" {
-  description = "Azure region."
   type        = string
+  description = "Azure location."
 }
 
 variable "account_tier" {
-  description = "Storage account tier."
   type        = string
+  description = "Account tier."
   default     = "Standard"
 }
 
 variable "account_replication_type" {
+  type        = string
   description = "Replication type."
-  type        = string
-  default     = "LRS"
+  default     = "GRS"
 }
 
-variable "enable_https_traffic_only" {
-  description = "Enables HTTPS traffic only."
-  type        = bool
-  default     = true
+variable "account_kind" {
+  type        = string
+  description = "Storage Kind."
+  default     = "StorageV2"
 }
 
-variable "min_tls_version" {
-  description = "Minimum TLS version allowed."
+variable "minimum_tls_version" {
   type        = string
+  description = "Minimum TLS version."
   default     = "TLS1_2"
 }
 
-variable "allow_blob_public_access" {
-  description = "Allow blob public access."
+variable "is_hns_enabled" {
   type        = bool
+  description = "Enable Hierarchical Namespace."
   default     = false
 }
 
+variable "access_tier" {
+  type        = string
+  description = "Access tier for blob storage."
+  default     = "Hot"
+}
+
+variable "network_default_action" {
+  type        = string
+  description = "Default network rule."
+  default     = "Allow"
+}
+
+variable "network_ip_rules" {
+  type        = list(string)
+  description = "IP rules for network."
+  default     = []
+}
+
+variable "network_subnet_ids" {
+  type        = list(string)
+  description = "Subnet IDs for network."
+  default     = []
+}
+
+variable "blob_delete_retention_days" {
+  type        = number
+  description = "Number of days for blob retention policy."
+  default     = 7
+}
+
+variable "enable_static_website" {
+  type        = bool
+  description = "Enable static website."
+  default     = false
+}
+
+variable "static_website_index_document" {
+  type        = string
+  description = "Index Document for static site."
+  default     = "index.html"
+}
+
+variable "static_website_error_404_document" {
+  type        = string
+  description = "404 Document for static site."
+  default     = "404.html"
+}
+
+variable "allow_blob_public_access" {
+  type        = bool
+  description = "Allow blob public access."
+  default     = false
+}
+
+variable "allow_shared_key_access" {
+  type        = bool
+  description = "Allow shared key access."
+  default     = true
+}
+
+variable "enable_diagnostics" {
+  type        = bool
+  description = "Enable monitoring diagnostics."
+  default     = false
+}
+
+variable "diagnostics_workspace_id" {
+  type        = string
+  description = "Log Analytics Workspace for diagnostics."
+  default     = ""
+}
+
 variable "tags" {
-  description = "Tags to apply to the resource."
   type        = map(string)
+  description = "Resource tags."
   default     = {}
-}
-
-variable "network_rules" {
-  description = "Network rules object as per AVM."
-  type = object({
-    default_action = string
-    bypass = list(string)
-    ip_rules = list(string)
-    virtual_network_subnet_ids = list(string)
-  })
-  default = null
-}
-
-variable "diagnostic_settings" {
-  description = "Diagnostics settings object."
-  type = object({
-    logs = list(object({
-      category = string
-      enabled  = bool
-      retention_policy = object({
-        enabled = bool
-        days    = number
-      })
-    }))
-    metrics = list(object({
-      category = string
-      enabled  = bool
-      retention_policy = object({
-        enabled = bool
-        days    = number
-      })
-    }))
-  })
-  default = null
 }
